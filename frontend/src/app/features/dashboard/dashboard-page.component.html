@@ -1,0 +1,189 @@
+@if (loading()) {
+  <div class="loading-state">Calibrating delivery signals…</div>
+} @else if (error()) {
+  <div class="alert alert--error" role="alert">{{ error() }}</div>
+} @else if (summary(); as summary) {
+  <div class="page-shell dashboard-page">
+    <header class="page-intro">
+      <div class="page-intro__copy">
+        <span class="page-kicker">Command center</span>
+        <h1>Delivery, at signal speed.</h1>
+        <p>See the health of the whole workspace without opening five different reports.</p>
+      </div>
+      <div class="page-intro__meta" aria-label="Workspace summary">
+        <div class="page-intro__stamp">
+          <strong>{{ summary.ActiveProjects }} live streams</strong>
+          <span>{{ summary.TotalProjects }} projects in portfolio</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="mission-grid" aria-label="Delivery pulse">
+      <article class="mission-brief">
+        <div class="mission-brief__topline">
+          <span class="relay-section-label">Delivery pulse</span>
+          <span class="mission-brief__week"
+            >{{ summary.CompletedThisWeekTasks }} moved this week</span
+          >
+        </div>
+
+        <div class="mission-brief__core">
+          <div>
+            <span class="mission-brief__number"
+              >{{ summary.CompletionRate | number: '1.0-0' }}%</span
+            >
+            <h2>Workspace completion</h2>
+            <p>
+              {{ summary.CompletedStoryPoints }} of {{ summary.TotalStoryPoints }} story points have
+              crossed the finish line.
+            </p>
+          </div>
+          <div class="mission-brief__chart" aria-label="Completion chart">
+            <app-apex-chart [options]="storyChart()"></app-apex-chart>
+          </div>
+        </div>
+
+        <div class="mission-brief__rail" aria-label="Task distribution">
+          <div>
+            <strong>{{ summary.ToDoTasks }}</strong
+            ><span>Ready</span>
+          </div>
+          <div>
+            <strong>{{ summary.InProgressTasks }}</strong
+            ><span>In motion</span>
+          </div>
+          <div>
+            <strong>{{ summary.DoneTasks }}</strong
+            ><span>Delivered</span>
+          </div>
+          <div class="is-risk">
+            <strong>{{ summary.OverdueTasks }}</strong
+            ><span>At risk</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="signal-column">
+        <article class="signal-card signal-card--lime">
+          <span>Current load</span>
+          <strong>{{ summary.TotalTasks }}</strong>
+          <p>work items across every active delivery stream</p>
+        </article>
+        <article class="signal-card">
+          <span>Near horizon</span>
+          <strong>{{ summary.DueThisWeekTasks }}</strong>
+          <p>items due before the current week closes</p>
+        </article>
+        <article class="signal-card signal-card--alert">
+          <span>Exception queue</span>
+          <strong>{{ summary.OverdueTasks }}</strong>
+          <p>items need attention or a revised delivery decision</p>
+        </article>
+      </aside>
+    </section>
+
+    <section class="dashboard-flow">
+      <article class="relay-panel status-console">
+        <div class="relay-panel__head">
+          <div>
+            <span class="relay-section-label">Flow distribution</span>
+            <h2>Where the work is sitting</h2>
+            <p>A compact view of task pressure across workflow states.</p>
+          </div>
+        </div>
+        <div class="relay-panel__body status-console__body">
+          <app-apex-chart [options]="statusChart()"></app-apex-chart>
+          <div class="status-index">
+            @for (item of summary.TasksByStatus; track item.Status; let i = $index) {
+              <div class="status-index__row">
+                <span class="status-index__rank">0{{ i + 1 }}</span>
+                <span class="status-index__name">{{ item.Status }}</span>
+                <strong>{{ item.Count }}</strong>
+              </div>
+            } @empty {
+              <div class="empty-state">No workflow status data available.</div>
+            }
+          </div>
+        </div>
+      </article>
+
+      <article class="relay-panel project-runway">
+        <div class="relay-panel__head">
+          <div>
+            <span class="relay-section-label">Portfolio runway</span>
+            <h2>Streams closest to delivery</h2>
+            <p>Completion, task count, and schedule context in one scan.</p>
+          </div>
+        </div>
+        <div class="project-runway__list">
+          @for (project of projects().slice(0, 6); track project.ProjectId; let rank = $index) {
+            <article class="runway-row">
+              <span class="runway-row__rank">{{ (rank + 1).toString().padStart(2, '0') }}</span>
+              <div class="runway-row__copy">
+                <div class="runway-row__title">
+                  <strong>{{ project.ProjectName }}</strong>
+                  <span [class.tag--warning]="project.OverdueTasks > 0" class="tag">
+                    {{ project.OverdueTasks ? project.OverdueTasks + ' overdue' : 'on track' }}
+                  </span>
+                </div>
+                <div class="runway-row__track" aria-hidden="true">
+                  <span [style.width.%]="completionRate(project)"></span>
+                </div>
+                <small
+                  >{{ project.DoneTasks }}/{{ project.TotalTasks }} items ·
+                  {{ project.CompletedStoryPoints }}/{{ project.TotalStoryPoints }} pts</small
+                >
+              </div>
+              <strong class="runway-row__value">{{ completionRate(project) }}%</strong>
+            </article>
+          } @empty {
+            <div class="empty-state">No project metrics available.</div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="dashboard-lower">
+      <article class="relay-panel throughput-map">
+        <div class="relay-panel__head">
+          <div>
+            <span class="relay-section-label">Contribution map</span>
+            <h2>Completed story-point momentum</h2>
+            <p>Top contributors or project streams ranked by delivered value.</p>
+          </div>
+        </div>
+        <div class="relay-panel__body throughput-map__chart">
+          <app-apex-chart [options]="throughputChart()"></app-apex-chart>
+        </div>
+      </article>
+
+      <article class="relay-panel activity-wire">
+        <div class="relay-panel__head">
+          <div>
+            <span class="relay-section-label">Live wire</span>
+            <h2>Recent workspace activity</h2>
+            <p>The latest delivery moves across teams and projects.</p>
+          </div>
+        </div>
+        <div class="activity-wire__feed">
+          @for (item of activity().slice(0, 8); track item.Id) {
+            <article class="activity-event">
+              <span class="activity-event__node" aria-hidden="true"></span>
+              <div class="activity-event__copy">
+                <strong>{{ item.Description }}</strong>
+                <p>{{ item.TaskTitle || item.ActivityType }}</p>
+                <span
+                  >{{ item.ProjectName || 'Workspace' }} ·
+                  {{ item.PerformedByUserName || 'System' }}</span
+                >
+              </div>
+              <time>{{ item.CreatedAt | date: 'MMM d, h:mm a' }}</time>
+            </article>
+          } @empty {
+            <div class="empty-state">No recent activity found.</div>
+          }
+        </div>
+      </article>
+    </section>
+  </div>
+}

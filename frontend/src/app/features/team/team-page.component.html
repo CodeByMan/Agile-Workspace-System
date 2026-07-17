@@ -1,0 +1,205 @@
+<div class="page-shell team-page">
+  <app-page-breadcrumb
+    pageTitle="Team"
+    eyebrow="People operations"
+    description="Understand who is carrying the work, how access is shaped, and where delivery capacity is concentrated."
+  />
+
+  <form
+    [formGroup]="filters"
+    (ngSubmit)="loadUsers()"
+    class="people-query"
+    aria-label="Team filters"
+  >
+    <div class="people-query__copy">
+      <span class="relay-section-label">Directory query</span>
+      <strong>{{ users().length }} visible members</strong>
+    </div>
+    <div class="field">
+      <label for="team-search">Search people</label>
+      <input
+        id="team-search"
+        type="search"
+        formControlName="search"
+        placeholder="Name, email, or title"
+      />
+    </div>
+    <div class="field">
+      <label for="team-role">Access role</label>
+      <select id="team-role" formControlName="role">
+        <option value="">All roles</option>
+        @for (role of roles; track role) {
+          <option [value]="role">{{ role }}</option>
+        }
+      </select>
+    </div>
+    <button type="submit" class="action action--dark">Refresh roster</button>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">{{ error() }}</div>
+  }
+
+  <section class="team-workbench">
+    <article class="relay-panel people-matrix">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Capacity matrix</span>
+          <h2>People, access, and delivery load</h2>
+          <p>One operating view for identity, workload, status, and permitted actions.</p>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="loading-state">Loading team directory…</div>
+      } @else {
+        <div class="people-matrix__list">
+          @for (user of users(); track user.Id; let index = $index) {
+            <article class="person-row" [class.is-inactive]="!user.IsActive">
+              <span class="person-row__index">{{ (index + 1).toString().padStart(2, '0') }}</span>
+              <span class="relay-avatar person-row__avatar">{{
+                (user.FullName || user.UserName).slice(0, 2).toUpperCase()
+              }}</span>
+
+              <div class="person-row__identity">
+                <strong>{{ user.FullName }}</strong>
+                <span>{{ user.JobTitle || user.Email }}</span>
+                <small>{{ user.Email }}</small>
+              </div>
+
+              <div class="person-row__role">
+                <small>Access</small>
+                <span class="tag tag--violet">{{ user.Role }}</span>
+              </div>
+
+              <div class="person-row__delivery">
+                <div>
+                  <small>Delivery load</small>
+                  <strong>{{ user.CompletedTasks }}/{{ user.AssignedTasks }}</strong>
+                </div>
+                <span class="person-row__meter" aria-hidden="true">
+                  <span
+                    [style.width.%]="
+                      user.AssignedTasks ? (user.CompletedTasks / user.AssignedTasks) * 100 : 0
+                    "
+                  ></span>
+                </span>
+              </div>
+
+              <span
+                class="tag"
+                [class.tag--success]="user.IsActive"
+                [class.tag--danger]="!user.IsActive"
+              >
+                {{ user.IsActive ? 'Active' : 'Inactive' }}
+              </span>
+
+              <div class="person-row__actions">
+                <button
+                  type="button"
+                  class="action action--compact"
+                  [disabled]="!canEdit(user)"
+                  (click)="select(user)"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  class="action action--compact"
+                  [class.action--danger]="user.IsActive"
+                  [disabled]="!canToggle(user)"
+                  (click)="toggleActive(user)"
+                >
+                  {{ user.IsActive ? 'Deactivate' : 'Activate' }}
+                </button>
+              </div>
+            </article>
+          } @empty {
+            <div class="empty-state">No members match the current directory query.</div>
+          }
+        </div>
+      }
+    </article>
+
+    <aside class="relay-panel people-inspector">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Identity inspector</span>
+          <h2>{{ selectedUser()?.FullName || 'Select a member' }}</h2>
+          <p>Update profile and role details only where your authorization allows it.</p>
+        </div>
+      </div>
+
+      <div class="relay-panel__body">
+        @if (selectedUser(); as selected) {
+          <div class="selected-person">
+            <span class="relay-avatar selected-person__avatar">{{
+              selected.FullName.slice(0, 2).toUpperCase()
+            }}</span>
+            <div>
+              <strong>{{ selected.FullName }}</strong>
+              <span>{{ selected.UserName }} · {{ selected.Role }}</span>
+            </div>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="submit()" class="form-stack" novalidate>
+            <div class="field">
+              <label for="team-fullname">Full name</label>
+              <input id="team-fullname" type="text" formControlName="fullName" />
+            </div>
+            <div class="field">
+              <label for="team-email">Email address</label>
+              <input id="team-email" type="email" formControlName="email" />
+            </div>
+            <div class="field">
+              <label for="team-editor-role">Role</label>
+              <select
+                id="team-editor-role"
+                [disabled]="!canChangeRole(selectedUser())"
+                formControlName="role"
+              >
+                @for (role of availableRoles(); track role) {
+                  <option [value]="role">{{ role }}</option>
+                }
+              </select>
+              @if (!canChangeRole(selectedUser())) {
+                <p class="field__hint">Your own role cannot be changed from this editor.</p>
+              }
+            </div>
+            <div class="field">
+              <label for="team-jobtitle">Job title</label>
+              <input
+                id="team-jobtitle"
+                type="text"
+                formControlName="jobTitle"
+                placeholder="e.g. Product Engineer"
+              />
+            </div>
+            <div class="field">
+              <label for="team-phone">Phone number</label>
+              <input id="team-phone" type="tel" formControlName="phoneNumber" />
+            </div>
+
+            @if (form.touched && form.invalid) {
+              <div class="alert alert--error">
+                A valid full name, email address, and role are required.
+              </div>
+            }
+
+            <div class="form-actions">
+              <button type="submit" class="action action--primary" [disabled]="saving()">
+                {{ saving() ? 'Saving…' : 'Save identity' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <div class="people-inspector__empty">
+            <span aria-hidden="true">↳</span>
+            <strong>Choose a person from the matrix</strong>
+            <p>The inspector will open only for members your role is allowed to manage.</p>
+          </div>
+        }
+      </div>
+    </aside>
+  </section>
+</div>

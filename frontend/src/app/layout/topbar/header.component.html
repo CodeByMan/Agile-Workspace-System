@@ -1,0 +1,168 @@
+<header class="relay-header">
+  <div class="relay-header__inner">
+    <a routerLink="/dashboard" class="relay-brand" aria-label="Relay dashboard">
+      <span class="relay-brand__glyph" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M5 17V7h4.5c4 0 6.5 1.9 6.5 5s-2.5 5-6.5 5H5Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+          <path d="M16.5 5v14" stroke="#34A853" stroke-width="2.2" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span class="relay-brand__copy">
+        <span class="relay-brand__name">Relay</span>
+        <span class="relay-brand__meta">Agile operating system</span>
+      </span>
+    </a>
+
+    <div class="relay-header__status">Workspace connected</div>
+
+    <div class="relay-header__actions">
+      <div class="relay-popover-wrap">
+        <button
+          type="button"
+          class="relay-icon-button"
+          aria-label="Open notifications"
+          (click)="toggleNotifications($event)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18C21 16 18 16 18 9Z"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linejoin="round"
+            />
+            <path d="M10 20h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          @if ((notifications | async)?.Unread) {
+            <span class="relay-notification-dot" aria-hidden="true"></span>
+          }
+        </button>
+
+        @if (notificationOpen()) {
+          <section
+            class="relay-popover"
+            (click)="$event.stopPropagation()"
+            aria-label="Notifications"
+          >
+            <div class="relay-popover__head">
+              <strong>Signal feed</strong>
+              @if (notifications | async; as summary) {
+                <span>{{ summary.Unread }} unread · {{ summary.Total }} total</span>
+              }
+            </div>
+            <div class="relay-popover__body">
+              @if (notifications | async; as summary) {
+                @for (item of summary.Items; track item.Id) {
+                  <a
+                    [routerLink]="item.Link || '/dashboard'"
+                    class="relay-notification"
+                    (click)="markRead(item.Id)"
+                  >
+                    <span class="relay-notification__mark" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M7 12.5 10.2 16 17 8.5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                    <span class="relay-notification__copy">
+                      <strong>{{ item.Title }}</strong>
+                      <p>{{ item.Message }}</p>
+                      <time>{{ item.CreatedAt | date: 'MMM d, h:mm a' }}</time>
+                    </span>
+                  </a>
+                } @empty {
+                  <div class="relay-popover__empty">No new signals. Your workspace is quiet.</div>
+                }
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <div class="relay-popover-wrap">
+        <button
+          type="button"
+          class="relay-profile-trigger"
+          aria-label="Open account menu"
+          (click)="toggleUserMenu($event)"
+        >
+          <span class="relay-avatar" aria-hidden="true">{{
+            (auth.currentUser()?.FullName || 'AW').slice(0, 2).toUpperCase()
+          }}</span>
+          <span class="relay-profile-trigger__copy">
+            <strong>{{ auth.currentUser()?.FullName || 'Workspace User' }}</strong>
+            <span>{{ auth.currentUser()?.Role || 'Member' }}</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="m8 10 4 4 4-4"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+
+        @if (userMenuOpen()) {
+          <section
+            class="relay-popover relay-popover--profile"
+            (click)="$event.stopPropagation()"
+            aria-label="Account menu"
+          >
+            <div class="relay-profile-identity">
+              <strong>{{ auth.currentUser()?.FullName || 'Workspace User' }}</strong>
+              <span>{{ auth.currentUser()?.Email || auth.currentUser()?.Role }}</span>
+            </div>
+            <div class="relay-profile-menu">
+              <a routerLink="/dashboard" (click)="userMenuOpen.set(false)">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 10.5 12 4l8 6.5V20H4v-9.5Z"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Command center
+              </a>
+              <a routerLink="/profile" (click)="userMenuOpen.set(false)">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8" />
+                  <path
+                    d="M4.5 20c.7-4 3.25-6 7.5-6s6.8 2 7.5 6"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                Identity settings
+              </a>
+              <button type="button" class="is-danger" (click)="signOut()">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M14 8V5H5v14h9v-3M10 12h11m0 0-3-3m3 3-3 3"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Sign out
+              </button>
+            </div>
+          </section>
+        }
+      </div>
+    </div>
+  </div>
+</header>

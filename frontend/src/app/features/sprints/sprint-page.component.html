@@ -1,0 +1,255 @@
+<div class="page-shell sprint-page">
+  <app-page-breadcrumb
+    pageTitle="Sprints"
+    eyebrow="Execution room"
+    description="Run timeboxed delivery as a focused operating cycle, not a stack of disconnected status cards."
+  />
+
+  <section class="sprint-operating-grid">
+    <div class="sprint-operating-grid__main">
+      <article class="relay-panel sprint-selector">
+        <div class="sprint-selector__toolbar">
+          <div class="field sprint-selector__project">
+            <label for="sprint-project-filter">Operating project</label>
+            <select
+              id="sprint-project-filter"
+              [formControl]="filters.controls.projectId"
+              (change)="onProjectChange()"
+            >
+              @for (project of projects(); track project.Id) {
+                <option [value]="project.Id">{{ project.Name }}</option>
+              }
+            </select>
+          </div>
+          @if (canManage()) {
+            <button type="button" class="action action--primary" (click)="startCreate()">
+              New cycle
+            </button>
+          }
+        </div>
+
+        <div class="sprint-track" aria-label="Sprint timeline">
+          @for (sprint of sprints(); track sprint.Id; let index = $index) {
+            <button
+              type="button"
+              class="sprint-node"
+              [class.is-selected]="selectedSprint()?.Id === sprint.Id"
+              [class.is-closed]="sprint.IsClosed"
+              (click)="selectSprint(sprint)"
+            >
+              <span class="sprint-node__index">{{ (index + 1).toString().padStart(2, '0') }}</span>
+              <span class="sprint-node__copy">
+                <strong>{{ sprint.Name }}</strong>
+                <small
+                  >{{ sprint.StartDate | date: 'MMM d' }} →
+                  {{ sprint.EndDate | date: 'MMM d' }}</small
+                >
+              </span>
+              <span class="sprint-node__state">{{ sprint.IsClosed ? 'Closed' : 'Live' }}</span>
+            </button>
+          } @empty {
+            <div class="empty-state">No sprint cycles exist for this project.</div>
+          }
+        </div>
+      </article>
+
+      @if (loading()) {
+        <div class="loading-state">Loading sprint operations…</div>
+      } @else if (selectedSprint(); as sprint) {
+        <article class="sprint-brief">
+          <div class="sprint-brief__identity">
+            <span class="relay-section-label">Current cycle</span>
+            <span
+              class="tag"
+              [class.tag--success]="!sprint.IsClosed"
+              [class.tag--warning]="sprint.IsClosed"
+            >
+              {{ sprint.IsClosed ? 'Cycle closed' : 'Cycle in motion' }}
+            </span>
+          </div>
+
+          <div class="sprint-brief__headline">
+            <div>
+              <h2>{{ sprint.Name }}</h2>
+              <p>{{ sprint.Goal || 'No sprint goal has been recorded.' }}</p>
+            </div>
+            <div class="sprint-brief__window">
+              <small>Execution window</small>
+              <strong
+                >{{ sprint.StartDate | date: 'MMM d' }} —
+                {{ sprint.EndDate | date: 'MMM d, y' }}</strong
+              >
+            </div>
+          </div>
+
+          <div class="sprint-brief__metrics">
+            <div>
+              <strong>{{ sprint.PlannedItemsCount }}</strong
+              ><span>Planned</span>
+            </div>
+            <div>
+              <strong>{{ todoCount() }}</strong
+              ><span>Ready</span>
+            </div>
+            <div>
+              <strong>{{ inProgressCount() }}</strong
+              ><span>In motion</span>
+            </div>
+            <div>
+              <strong>{{ doneCount() }}</strong
+              ><span>Delivered</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="relay-panel sprint-burndown">
+          <div class="relay-panel__head">
+            <div>
+              <span class="relay-section-label">Burn signal</span>
+              <h2>Remaining work versus completed work</h2>
+              <p>The execution curve across the selected project timeline.</p>
+            </div>
+          </div>
+          <div class="relay-panel__body">
+            <app-apex-chart [options]="burndownChart()"></app-apex-chart>
+          </div>
+        </article>
+
+        <article class="relay-panel sprint-inventory">
+          <div class="relay-panel__head">
+            <div>
+              <span class="relay-section-label">Cycle inventory</span>
+              <h2>{{ sprintItems().length }} committed work items</h2>
+              <p>Scope, ownership, due date, and current workflow position.</p>
+            </div>
+          </div>
+
+          <div class="sprint-inventory__list">
+            @for (item of sprintItems(); track item.Id; let index = $index) {
+              <article class="sprint-item">
+                <span class="sprint-item__index">{{
+                  (index + 1).toString().padStart(2, '0')
+                }}</span>
+                <div class="sprint-item__copy">
+                  <strong>{{ item.Title }}</strong>
+                  <span
+                    >{{ item.AssignedToUserName || 'Unassigned' }} ·
+                    {{ item.ProjectName || 'Workspace' }}</span
+                  >
+                </div>
+                <span
+                  class="tag"
+                  [class.tag--success]="item.Status === 3"
+                  [class.tag--warning]="item.Status === 4"
+                  [class.tag--blue]="item.Status === 2"
+                >
+                  @switch (item.Status) {
+                    @case (1) {
+                      Ready
+                    }
+                    @case (2) {
+                      In progress
+                    }
+                    @case (3) {
+                      Done
+                    }
+                    @case (4) {
+                      Blocked
+                    }
+                    @default {
+                      Unknown
+                    }
+                  }
+                </span>
+                <time>{{ item.DueDate ? (item.DueDate | date: 'MMM d, y') : 'No due date' }}</time>
+              </article>
+            } @empty {
+              <div class="empty-state">No work is assigned to this sprint cycle.</div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    <aside class="relay-panel sprint-editor">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Cycle definition</span>
+          <h2>{{ selectedSprint() ? 'Tune sprint' : 'Create sprint' }}</h2>
+          <p>Maintain the sprint contract and lifecycle state.</p>
+        </div>
+      </div>
+
+      <div class="relay-panel__body">
+        @if (canManage()) {
+          <form [formGroup]="sprintForm" (ngSubmit)="submit()" class="form-stack" novalidate>
+            <div class="field">
+              <label for="sprint-name">Sprint name</label>
+              <input
+                id="sprint-name"
+                type="text"
+                formControlName="name"
+                placeholder="e.g. Activation Cycle 04"
+              />
+            </div>
+
+            <div class="field">
+              <label for="sprint-project">Project</label>
+              <select id="sprint-project" formControlName="projectId">
+                @for (project of projects(); track project.Id) {
+                  <option [value]="project.Id">{{ project.Name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="sprint-goal">Cycle goal</label>
+              <textarea
+                id="sprint-goal"
+                formControlName="goal"
+                rows="4"
+                placeholder="What measurable outcome should this cycle create?"
+              ></textarea>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="sprint-start">Start</label>
+                <input id="sprint-start" type="date" formControlName="startDate" />
+              </div>
+              <div class="field">
+                <label for="sprint-end">End</label>
+                <input id="sprint-end" type="date" formControlName="endDate" />
+              </div>
+            </div>
+
+            <label class="field-check">
+              <input type="checkbox" formControlName="isClosed" />
+              Close this delivery cycle
+            </label>
+
+            @if (sprintForm.touched && sprintForm.invalid) {
+              <div class="alert alert--error">
+                A sprint name, project, start date, and end date are required.
+              </div>
+            }
+            @if (error()) {
+              <div class="alert alert--error" role="alert">{{ error() }}</div>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="action" (click)="startCreate()">Fresh cycle</button>
+              <button type="submit" class="action action--primary" [disabled]="saving()">
+                {{ saving() ? 'Saving…' : selectedSprint() ? 'Update cycle' : 'Create cycle' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <div class="permission-note">
+            Your role can monitor sprint execution but cannot redefine sprint records.
+          </div>
+        }
+      </div>
+    </aside>
+  </section>
+</div>

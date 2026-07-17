@@ -1,0 +1,132 @@
+<div class="auth-stage">
+  <section class="auth-story" aria-label="Relay account introduction">
+    <a routerLink="/signin" class="auth-story__brand" aria-label="Relay sign in">
+      <span class="relay-brand__glyph" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M5 17V7h4.5c4 0 6.5 1.9 6.5 5s-2.5 5-6.5 5H5Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+          <path d="M16.5 5v14" stroke="#34A853" stroke-width="2.2" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span class="auth-story__brand-copy"
+        ><strong>Relay</strong><span>Agile operating system</span></span
+      >
+    </a>
+
+    <div class="auth-story__body">
+      <span class="auth-story__kicker">Developer onboarding</span>
+      <h1>Join the work, not the noise.</h1>
+      <p>
+        Create your Developer identity and enter the same protected project, backlog, sprint, and
+        collaboration flows.
+      </p>
+    </div>
+
+    <div class="auth-story__signals" aria-label="Account benefits">
+      <div class="auth-story__signal">
+        <strong>Protected</strong><span>Existing API-backed registration and token handling.</span>
+      </div>
+      <div class="auth-story__signal">
+        <strong>Role aware</strong
+        ><span>Capabilities adapt to the permissions assigned to you.</span>
+      </div>
+      <div class="auth-story__signal">
+        <strong>Immediate</strong
+        ><span>Move directly into the delivery workspace after signup.</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="auth-entry">
+    <div class="auth-entry__wrap">
+      <a routerLink="/signin" class="relay-brand auth-mobile-brand" aria-label="Relay">
+        <span class="relay-brand__glyph" aria-hidden="true"
+          ><svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 17V7h4.5c4 0 6.5 1.9 6.5 5s-2.5 5-6.5 5H5Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <path d="M16.5 5v14" stroke="#34A853" stroke-width="2.2" stroke-linecap="round" /></svg
+        ></span>
+        <span class="relay-brand__copy"
+          ><span class="relay-brand__name">Relay</span
+          ><span class="relay-brand__meta">Agile operating system</span></span
+        >
+      </a>
+
+      <a routerLink="/signin" class="auth-back"
+        ><span aria-hidden="true">←</span> Back to sign in</a
+      >
+      <span class="auth-entry__eyebrow">Create workspace identity</span>
+      <h2>Start delivering.</h2>
+      <p class="auth-entry__intro">
+        A compact Developer registration using the application’s existing secure account flow.
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form" novalidate>
+        <div class="auth-form__grid">
+          <div class="field">
+            <label for="signup-username">Username</label>
+            <input
+              id="signup-username"
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+            />
+          </div>
+          <div class="field">
+            <label for="signup-name">Full name</label>
+            <input id="signup-name" type="text" formControlName="fullName" autocomplete="name" />
+          </div>
+          <div class="field auth-form__wide">
+            <label for="signup-email">Email address</label>
+            <input id="signup-email" type="email" formControlName="email" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="signup-password">Password</label>
+            <input
+              id="signup-password"
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+              aria-describedby="signup-password-requirements"
+            />
+          </div>
+          <div class="field">
+            <label for="signup-confirm">Confirm password</label>
+            <input
+              id="signup-confirm"
+              type="password"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              aria-describedby="signup-password-requirements"
+            />
+          </div>
+        </div>
+
+        <p id="signup-password-requirements" class="field__hint">{{ passwordRequirements }}</p>
+
+        @if (form.touched && form.invalid) {
+          <div class="alert alert--error" role="alert">
+            Complete every required field with valid details and a compliant password.
+          </div>
+        }
+        @if (error()) {
+          <div class="alert alert--error" role="alert">{{ error() }}</div>
+        }
+
+        <button type="submit" class="auth-submit" [disabled]="loading()">
+          {{ loading() ? 'Creating identity…' : 'Create Developer account' }}
+        </button>
+      </form>
+
+      <p class="auth-meta">Already registered? <a routerLink="/signin">Sign in</a></p>
+    </div>
+  </main>
+</div>

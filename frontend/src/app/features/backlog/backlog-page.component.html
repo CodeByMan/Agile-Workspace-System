@@ -1,0 +1,344 @@
+<div class="page-shell backlog-page">
+  <app-page-breadcrumb
+    pageTitle="Backlog"
+    eyebrow="Intake control"
+    description="Interrogate the work queue, set planning intent, and move the right items toward execution."
+  />
+
+  <form
+    [formGroup]="filters"
+    (ngSubmit)="loadTasks()"
+    class="query-console"
+    aria-label="Backlog filters"
+  >
+    <div class="query-console__lead">
+      <span>Query</span>
+      <strong>{{ items().length }} items</strong>
+    </div>
+
+    <div class="field">
+      <label for="backlog-project">Project</label>
+      <select id="backlog-project" formControlName="projectId">
+        <option value="">All projects</option>
+        @for (project of projects(); track project.Id) {
+          <option [value]="project.Id">{{ project.Name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field query-console__search">
+      <label for="backlog-search">Contains</label>
+      <input
+        id="backlog-search"
+        type="search"
+        formControlName="search"
+        placeholder="Search title or description"
+      />
+    </div>
+
+    <div class="field">
+      <label for="backlog-status">Status</label>
+      <select id="backlog-status" formControlName="status">
+        <option value="">Any status</option>
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="backlog-priority">Priority</label>
+      <select id="backlog-priority" formControlName="priority">
+        <option value="">Any priority</option>
+        @for (option of priorityOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="backlog-type">Type</label>
+      <select id="backlog-type" formControlName="workItemType">
+        <option value="">Any type</option>
+        @for (option of typeOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <button type="submit" class="action action--dark">Run query</button>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">{{ error() }}</div>
+  }
+
+  <section class="backlog-workbench">
+    <article class="relay-panel backlog-queue">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Unscheduled inventory</span>
+          <h2>Work queue</h2>
+          <p>Select an item to inspect or update its execution contract.</p>
+        </div>
+        @if (canCreate()) {
+          <button type="button" class="action action--primary" (click)="startCreate()">
+            New item
+          </button>
+        }
+      </div>
+
+      @if (loading()) {
+        <div class="loading-state">Loading backlog inventory…</div>
+      } @else {
+        <div class="backlog-queue__list">
+          @for (item of items(); track item.Id; let index = $index) {
+            <button
+              type="button"
+              class="work-ticket"
+              [class.is-selected]="selectedTask()?.Id === item.Id"
+              (click)="selectTask(item)"
+            >
+              <span class="work-ticket__sequence">{{
+                (index + 1).toString().padStart(2, '0')
+              }}</span>
+              <span class="work-ticket__body">
+                <span class="work-ticket__title">{{ item.Title }}</span>
+                <span class="work-ticket__meta"
+                  >{{ item.ProjectName || 'Workspace' }} ·
+                  {{ item.AssignedToUserName || 'Unassigned' }}</span
+                >
+                <span class="work-ticket__tags">
+                  <span class="tag tag--blue">{{ typeLabel(item.WorkItemType) }}</span>
+                  <span
+                    class="tag"
+                    [class.tag--success]="item.Status === 3"
+                    [class.tag--warning]="item.Status === 4"
+                    >{{ statusLabel(item.Status) }}</span
+                  >
+                  <span
+                    class="tag"
+                    [class.tag--danger]="item.Priority === 4"
+                    [class.tag--warning]="item.Priority === 3"
+                    >{{ priorityLabel(item.Priority) }}</span
+                  >
+                </span>
+              </span>
+              <span class="work-ticket__points">{{ item.StoryPoints }}<small>pts</small></span>
+            </button>
+          } @empty {
+            <div class="empty-state">The current query returned no backlog items.</div>
+          }
+        </div>
+      }
+    </article>
+
+    <aside class="relay-panel backlog-inspector">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Work contract</span>
+          <h2>{{ selectedTask() ? 'Inspect and update' : 'Draft a new item' }}</h2>
+          <p>Business rules and role permissions remain exactly as defined by the application.</p>
+        </div>
+      </div>
+
+      <div class="relay-panel__body">
+        @if (canCreate() || (selectedTask() && canUpdate())) {
+          <form [formGroup]="editorForm" (ngSubmit)="submit()" class="form-stack" novalidate>
+            @if (selectedTask() && !canManagePlanning()) {
+              <div class="planning-lock">
+                Planning controls are locked for your role. Content and status updates remain
+                available where authorized.
+              </div>
+            }
+
+            <div class="field">
+              <label for="item-title">Title</label>
+              <input
+                id="item-title"
+                type="text"
+                formControlName="title"
+                placeholder="Describe the outcome, not the activity"
+              />
+            </div>
+
+            <div class="form-grid">
+              <div class="field form-span-2">
+                <label for="item-description">Description</label>
+                <textarea
+                  id="item-description"
+                  formControlName="description"
+                  rows="3"
+                  placeholder="Context, user need, or implementation boundary"
+                ></textarea>
+              </div>
+              <div class="field form-span-2">
+                <label for="item-acceptance">Acceptance criteria</label>
+                <textarea
+                  id="item-acceptance"
+                  formControlName="acceptanceCriteria"
+                  rows="3"
+                  placeholder="What must be true before this can be considered done?"
+                ></textarea>
+              </div>
+
+              <div class="field">
+                <label for="item-project">Project</label>
+                <select id="item-project" formControlName="projectId">
+                  @for (project of projects(); track project.Id) {
+                    <option [value]="project.Id">{{ project.Name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-sprint">Sprint</label>
+                <select id="item-sprint" formControlName="sprintId">
+                  <option value="">Backlog</option>
+                  @for (sprint of sprints(); track sprint.Id) {
+                    <option [value]="sprint.Id">{{ sprint.Name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-assignee">Assignee</label>
+                <select id="item-assignee" formControlName="assignedToUserId">
+                  <option value="">Unassigned</option>
+                  @for (user of users(); track user.Id) {
+                    <option [value]="user.Id">{{ user.FullName }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-type">Type</label>
+                <select id="item-type" formControlName="workItemType">
+                  @for (option of typeOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-status">Status</label>
+                <select id="item-status" formControlName="status">
+                  @for (option of statusOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-priority">Priority</label>
+                <select id="item-priority" formControlName="priority">
+                  @for (option of priorityOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label for="item-points">Story points</label>
+                <input id="item-points" type="number" min="0" formControlName="storyPoints" />
+              </div>
+              <div class="field">
+                <label for="item-start">Start</label>
+                <input id="item-start" type="date" formControlName="startDate" />
+              </div>
+              <div class="field">
+                <label for="item-due">Due</label>
+                <input id="item-due" type="date" formControlName="dueDate" />
+              </div>
+            </div>
+
+            @if (editorForm.touched && editorForm.invalid) {
+              <div class="alert alert--error">
+                Complete the required title, project, workflow, priority, type, and estimate fields.
+              </div>
+            }
+
+            <div class="form-actions">
+              @if (selectedTask() && canDelete()) {
+                <button type="button" class="action action--danger" (click)="removeSelected()">
+                  Delete item
+                </button>
+              }
+              @if (canCreate()) {
+                <button type="button" class="action" (click)="startCreate()">Fresh draft</button>
+              }
+              <button type="submit" class="action action--primary" [disabled]="saving()">
+                {{ saving() ? 'Saving…' : selectedTask() ? 'Update contract' : 'Create item' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <div class="permission-note">
+            Your role can inspect this queue but cannot modify its work contracts.
+          </div>
+        }
+      </div>
+    </aside>
+  </section>
+
+  @if (selectedTask(); as task) {
+    <section class="selected-work">
+      <article class="relay-panel selected-work__brief">
+        <div class="relay-panel__head">
+          <div>
+            <span class="relay-section-label">Selected item</span>
+            <h2>{{ task.Title }}</h2>
+            <p>{{ task.Description || 'No description has been provided.' }}</p>
+          </div>
+          <span class="tag tag--blue">{{ task.StoryPoints }} points</span>
+        </div>
+        <div class="relay-panel__body">
+          <div class="selected-work__facts">
+            <span><small>Type</small>{{ typeLabel(task.WorkItemType) }}</span>
+            <span><small>Status</small>{{ statusLabel(task.Status) }}</span>
+            <span><small>Priority</small>{{ priorityLabel(task.Priority) }}</span>
+            <span><small>Sprint</small>{{ task.SprintName || 'Backlog' }}</span>
+          </div>
+          <div class="acceptance-block">
+            <span>Acceptance contract</span>
+            <p>{{ task.AcceptanceCriteria || 'No acceptance criteria recorded.' }}</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="relay-panel selected-work__conversation">
+        <div class="relay-panel__head">
+          <div>
+            <span class="relay-section-label">Conversation</span>
+            <h2>{{ task.Comments.length }} comments</h2>
+            <p>Decision context remains attached to the work item.</p>
+          </div>
+        </div>
+        <div class="comment-stream">
+          @for (comment of task.Comments; track comment.Id) {
+            <article class="comment-note">
+              <span class="relay-avatar">{{
+                (comment.CreatedByUserName || 'SY').slice(0, 2).toUpperCase()
+              }}</span>
+              <div>
+                <p>{{ comment.Content }}</p>
+                <span
+                  >{{ comment.CreatedByUserName || 'System' }} ·
+                  {{ comment.CreatedAt | date: 'MMM d, h:mm a' }}</span
+                >
+              </div>
+            </article>
+          } @empty {
+            <div class="empty-state">No comments yet.</div>
+          }
+        </div>
+        <form [formGroup]="commentForm" (ngSubmit)="addComment()" class="comment-composer">
+          <label for="work-comment">Add context</label>
+          <div>
+            <textarea
+              id="work-comment"
+              formControlName="content"
+              rows="2"
+              placeholder="Record a decision, blocker, or clarification"
+            ></textarea>
+            <button type="submit" class="action action--dark">Post comment</button>
+          </div>
+        </form>
+      </article>
+    </section>
+  }
+</div>

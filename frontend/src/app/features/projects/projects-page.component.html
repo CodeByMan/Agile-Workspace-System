@@ -1,0 +1,171 @@
+<div class="page-shell projects-page">
+  <app-page-breadcrumb
+    pageTitle="Projects"
+    eyebrow="Portfolio control"
+    description="Shape the delivery portfolio, review stream health, and maintain project boundaries."
+  />
+
+  <section class="projects-workbench">
+    <article class="relay-panel portfolio-index">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Portfolio index</span>
+          <h2>{{ projects().length }} delivery streams</h2>
+          <p>Each row is a live operating context, not another generic project card.</p>
+        </div>
+        @if (canManage()) {
+          <button type="button" class="action action--primary" (click)="startCreate()">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            New stream
+          </button>
+        }
+      </div>
+
+      @if (loading()) {
+        <div class="loading-state">Loading portfolio…</div>
+      } @else {
+        <div class="portfolio-index__list">
+          @for (project of projects(); track project.Id; let index = $index) {
+            <article class="portfolio-row" [class.is-archived]="project.IsArchived">
+              <div class="portfolio-row__index">{{ (index + 1).toString().padStart(2, '0') }}</div>
+
+              <div class="portfolio-row__main">
+                <div class="portfolio-row__heading">
+                  <div>
+                    <h3>{{ project.Name }}</h3>
+                    <p>{{ project.Description || 'No project summary has been added yet.' }}</p>
+                  </div>
+                  <span
+                    class="tag"
+                    [class.tag--active]="!project.IsArchived"
+                    [class.tag--warning]="project.IsArchived"
+                  >
+                    {{ project.IsArchived ? 'Archived' : 'Operating' }}
+                  </span>
+                </div>
+
+                <div class="portfolio-row__facts">
+                  <span
+                    ><small>Window</small>{{ project.StartDate | date: 'MMM d, y' }} →
+                    {{ project.EndDate ? (project.EndDate | date: 'MMM d, y') : 'Open' }}</span
+                  >
+                  <span
+                    ><small>Task signal</small>{{ project.CompletedTasks }} delivered /
+                    {{ project.TotalTasks }} total</span
+                  >
+                  <span><small>Owner</small>{{ project.CreatedByUserName || 'Workspace' }}</span>
+                </div>
+
+                <div class="portfolio-row__progress">
+                  <div><span [style.width.%]="progress(project)"></span></div>
+                  <strong>{{ progress(project) }}%</strong>
+                </div>
+              </div>
+
+              @if (canManage()) {
+                <div class="portfolio-row__actions">
+                  <button type="button" class="action action--compact" (click)="edit(project)">
+                    Edit
+                  </button>
+                  @if (canDelete()) {
+                    <button
+                      type="button"
+                      class="action action--compact action--danger"
+                      (click)="remove(project)"
+                    >
+                      Delete
+                    </button>
+                  }
+                </div>
+              }
+            </article>
+          } @empty {
+            <div class="empty-state">No delivery streams exist yet.</div>
+          }
+        </div>
+      }
+    </article>
+
+    <aside class="relay-panel project-inspector">
+      <div class="relay-panel__head">
+        <div>
+          <span class="relay-section-label">Stream definition</span>
+          <h2>{{ selectedProjectId() ? 'Edit project' : 'Create project' }}</h2>
+          <p>Define the operating window and context without changing backend behavior.</p>
+        </div>
+      </div>
+
+      <div class="relay-panel__body">
+        @if (canManage()) {
+          <form [formGroup]="form" (ngSubmit)="submit()" class="form-stack" novalidate>
+            <div class="field">
+              <label for="project-name">Project name</label>
+              <input
+                id="project-name"
+                type="text"
+                formControlName="name"
+                placeholder="e.g. Customer onboarding redesign"
+              />
+            </div>
+
+            <div class="field">
+              <label for="project-description">Context</label>
+              <textarea
+                id="project-description"
+                formControlName="description"
+                rows="5"
+                placeholder="What outcome does this stream own?"
+              ></textarea>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="project-start">Start date</label>
+                <input id="project-start" type="date" formControlName="startDate" />
+              </div>
+              <div class="field">
+                <label for="project-end">End date</label>
+                <input id="project-end" type="date" formControlName="endDate" />
+              </div>
+            </div>
+
+            <label class="field-check">
+              <input type="checkbox" formControlName="isArchived" />
+              Move this stream out of active operations
+            </label>
+
+            @if (form.touched && form.invalid) {
+              <div class="alert alert--error">
+                A project name and valid start date are required.
+              </div>
+            }
+            @if (error()) {
+              <div class="alert alert--error" role="alert">{{ error() }}</div>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="action" (click)="startCreate()">Clear editor</button>
+              <button type="submit" class="action action--primary" [disabled]="saving()">
+                {{ saving() ? 'Saving…' : selectedProjectId() ? 'Update stream' : 'Create stream' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <div class="permission-note">
+            <span>View-only mode</span>
+            <p>
+              Your current role can inspect the portfolio but cannot change project definitions.
+            </p>
+          </div>
+        }
+      </div>
+    </aside>
+  </section>
+</div>

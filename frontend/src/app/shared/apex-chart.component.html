@@ -1,0 +1,109 @@
+<div
+  class="workspace-chart"
+  [class.workspace-chart--radial]="chartType() === 'radialBar'"
+  [style.min-height.px]="chartHeight()"
+  role="img"
+  [attr.aria-label]="ariaLabel()"
+>
+  @switch (chartType()) {
+    @case ('radialBar') {
+      <div class="radial-chart">
+        <div
+          class="radial-chart__ring"
+          [style.--chart-progress]="radialValue() + '%'"
+          [style.--chart-color]="primaryColor()"
+        >
+          <div class="radial-chart__center">
+            <strong>{{ radialValue() | number: '1.0-0' }}%</strong>
+            <span>{{ radialLabel() }}</span>
+          </div>
+        </div>
+      </div>
+    }
+    @case ('bar') {
+      @if (barData().length) {
+        <div class="bar-chart">
+          <div class="bar-chart__plot">
+            @for (item of barData(); track item.label) {
+              <div class="bar-chart__column">
+                <span class="bar-chart__value">{{ item.value | number: '1.0-0' }}</span>
+                <span class="bar-chart__track" aria-hidden="true">
+                  <span
+                    class="bar-chart__fill"
+                    [style.height.%]="item.height"
+                    [style.background]="primaryColor()"
+                  ></span>
+                </span>
+                <span class="bar-chart__label" [title]="item.label">{{ item.label }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="chart-empty">No chart data is available yet.</div>
+      }
+    }
+    @default {
+      @if (hasAxisData()) {
+        <div class="line-chart">
+          @if (legendVisible()) {
+            <div class="line-chart__legend" aria-hidden="true">
+              @for (path of linePaths(); track path.name) {
+                <span><i [style.background]="path.color"></i>{{ path.name }}</span>
+              }
+            </div>
+          }
+
+          <div class="line-chart__plot">
+            <svg viewBox="0 0 1000 280" preserveAspectRatio="none" aria-hidden="true">
+              <g class="line-chart__grid">
+                <line x1="26" y1="24" x2="974" y2="24" />
+                <line x1="26" y1="80" x2="974" y2="80" />
+                <line x1="26" y1="136" x2="974" y2="136" />
+                <line x1="26" y1="192" x2="974" y2="192" />
+                <line x1="26" y1="248" x2="974" y2="248" />
+              </g>
+              @for (path of linePaths(); track path.name) {
+                @if (chartType() === 'area') {
+                  <polygon
+                    [attr.points]="path.areaPoints"
+                    [attr.fill]="path.color"
+                    fill-opacity="0.09"
+                  />
+                }
+                <polyline
+                  [attr.points]="path.points"
+                  [attr.stroke]="path.color"
+                  fill="none"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  vector-effect="non-scaling-stroke"
+                />
+                @for (marker of path.markers; track $index) {
+                  <circle
+                    [attr.cx]="marker.x"
+                    [attr.cy]="marker.y"
+                    r="5"
+                    [attr.fill]="path.color"
+                    stroke="#FFFFFF"
+                    stroke-width="3"
+                    vector-effect="non-scaling-stroke"
+                  />
+                }
+              }
+            </svg>
+          </div>
+
+          <div class="line-chart__labels" aria-hidden="true">
+            @for (label of axisLabels(); track label.position) {
+              <span [style.left.%]="label.position" [title]="label.text">{{ label.text }}</span>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="chart-empty">No chart data is available yet.</div>
+      }
+    }
+  }
+</div>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="190" height="44" viewBox="0 0 190 44" role="img" aria-labelledby="title">
+  <title id="title">Agile Workspace</title>
+  <rect x="1" y="1" width="42" height="42" rx="11" fill="#465fff"/>
+  <path d="M12 31 20.2 12h4.1L33 31h-5l-1.8-4.4h-8.5L16 31h-4Zm7.3-8.4h5.3L22 16.1l-2.7 6.5Z" fill="#fff"/>
+  <text x="53" y="27" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#111827">Agile Workspace</text>
+</svg>

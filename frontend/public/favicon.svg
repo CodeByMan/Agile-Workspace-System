@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Agile Workspace</title>
+  <desc id="desc">Agile Workspace blue application icon</desc>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="#1A73E8"/>
+  <path fill="#FFFFFF" fill-rule="evenodd" d="M13.5 47.5 28.3 14.8h7.4l14.8 32.7h-9.4l-2.7-6.7H25.6l-2.7 6.7h-9.4Zm15-14.2h7l-3.5-9-3.5 9Z"/>
+  <circle cx="45" cy="18" r="3.25" fill="#34A853"/>
+  <circle cx="52.5" cy="24" r="3.25" fill="#FBBC04"/>
+  <circle cx="48" cy="32" r="3.25" fill="#EA4335"/>
+</svg>

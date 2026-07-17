@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Workspace user avatar</title>
+  <rect width="128" height="128" rx="64" fill="#eef2ff"/>
+  <circle cx="64" cy="47" r="23" fill="#7592ff"/>
+  <path d="M22 112c4-25 19-39 42-39s38 14 42 39" fill="#465fff"/>
+</svg>

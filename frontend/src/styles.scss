@@ -1,0 +1,32 @@
+@import './styles/design-system.css';
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+img,
+svg {
+  max-width: 100%;
+}

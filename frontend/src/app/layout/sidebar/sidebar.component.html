@@ -1,0 +1,113 @@
+<nav class="relay-command-nav" aria-label="Primary navigation">
+  <div class="relay-command-nav__inner">
+    <ul class="relay-command-nav__list">
+      @for (group of navigation.menuGroups; track group.title) {
+        @for (item of group.items; track item.name) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="is-active"
+              class="relay-command-nav__item"
+              [attr.aria-label]="item.name"
+            >
+              @switch (item.icon) {
+                @case ('dashboard') {
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                }
+                @case ('folder') {
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6A2.5 2.5 0 0 1 20.5 9.5v7A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5v-9Z"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                }
+                @case ('list') {
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M8 6h12M8 12h12M8 18h12"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M4 6h.01M4 12h.01M4 18h.01"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                }
+                @case ('kanban') {
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect
+                      x="3.5"
+                      y="4"
+                      width="5"
+                      height="16"
+                      rx="1.5"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    />
+                    <rect
+                      x="9.5"
+                      y="4"
+                      width="5"
+                      height="10"
+                      rx="1.5"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    />
+                    <rect
+                      x="15.5"
+                      y="4"
+                      width="5"
+                      height="13"
+                      rx="1.5"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    />
+                  </svg>
+                }
+                @case ('users') {
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8" />
+                    <path
+                      d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5M15 5.4a3 3 0 0 1 0 5.2M16 14c2.5.4 4 2 4.5 4.5"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                }
+                @default {
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8" />
+                    <path
+                      d="M4.5 20c.7-4 3.25-6 7.5-6s6.8 2 7.5 6"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                }
+              }
+              <span>{{ item.name }}</span>
+            </a>
+          </li>
+        }
+      }
+    </ul>
+
+    <span class="relay-command-nav__hint"><kbd>R</kbd> Relay command center</span>
+  </div>
+</nav>

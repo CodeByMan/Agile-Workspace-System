@@ -1,0 +1,211 @@
+<div class="page-shell profile-page">
+  <app-page-breadcrumb
+    pageTitle="Identity"
+    eyebrow="Personal workspace"
+    description="Manage the profile, contact details, and credentials attached to your workspace identity."
+  />
+
+  @if (loading()) {
+    <div class="loading-state">Loading identity record…</div>
+  } @else if (profile(); as profile) {
+    <section class="identity-layout">
+      <aside class="identity-passport">
+        <div class="identity-passport__topline">
+          <span>Relay identity</span>
+          <span
+            class="tag"
+            [class.tag--success]="profile.IsActive"
+            [class.tag--danger]="!profile.IsActive"
+          >
+            {{ profile.IsActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+
+        <div class="identity-passport__portrait" aria-hidden="true">
+          {{ profile.FullName.slice(0, 2).toUpperCase() }}
+        </div>
+
+        <div class="identity-passport__name">
+          <span>{{ profile.Role }}</span>
+          <h2>{{ profile.FullName }}</h2>
+          <p>{{ profile.JobTitle || 'Workspace member' }}</p>
+        </div>
+
+        <dl class="identity-passport__facts">
+          <div>
+            <dt>Username</dt>
+            <dd>{{ profile.UserName }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ profile.Email }}</dd>
+          </div>
+          <div>
+            <dt>Phone</dt>
+            <dd>{{ profile.PhoneNumber || 'Not provided' }}</dd>
+          </div>
+          <div>
+            <dt>Member since</dt>
+            <dd>{{ profile.CreatedAt | date: 'MMM d, y' }}</dd>
+          </div>
+        </dl>
+
+        <div class="identity-passport__footer">
+          <span aria-hidden="true"></span>
+          <p>Protected by the existing JWT-backed account flow.</p>
+        </div>
+      </aside>
+
+      <div class="identity-settings">
+        <article class="relay-panel">
+          <div class="relay-panel__head">
+            <div>
+              <span class="relay-section-label">Profile record</span>
+              <h2>Professional details</h2>
+              <p>Keep the information visible to your delivery team accurate.</p>
+            </div>
+          </div>
+          <div class="relay-panel__body">
+            <form
+              [formGroup]="profileForm"
+              (ngSubmit)="saveProfile()"
+              class="form-stack"
+              novalidate
+            >
+              <div class="form-grid">
+                <div class="field">
+                  <label for="profile-fullname">Full name</label>
+                  <input id="profile-fullname" type="text" formControlName="fullName" />
+                </div>
+                <div class="field">
+                  <label for="profile-email">Email address</label>
+                  <input id="profile-email" type="email" formControlName="email" />
+                </div>
+                <div class="field">
+                  <label for="profile-title">Job title</label>
+                  <input
+                    id="profile-title"
+                    type="text"
+                    formControlName="jobTitle"
+                    placeholder="e.g. Backend Engineer"
+                  />
+                </div>
+                <div class="field">
+                  <label for="profile-phone">Phone number</label>
+                  <input id="profile-phone" type="tel" formControlName="phoneNumber" />
+                </div>
+              </div>
+
+              @if (profileForm.touched && profileForm.invalid) {
+                <div class="alert alert--error">
+                  A valid full name and email address are required.
+                </div>
+              }
+              @if (error()) {
+                <div class="alert alert--error" role="alert">{{ error() }}</div>
+              }
+              @if (success()) {
+                <div class="alert alert--success" role="status">{{ success() }}</div>
+              }
+
+              <div class="form-actions">
+                <button type="submit" class="action action--primary" [disabled]="saving()">
+                  {{ saving() ? 'Saving…' : 'Save profile' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <article class="relay-panel security-console">
+          <div class="relay-panel__head">
+            <div>
+              <span class="relay-section-label">Credential control</span>
+              <h2>Change password</h2>
+              <p>
+                Rotate your credentials without changing the established authentication contract.
+              </p>
+            </div>
+            <span class="security-console__mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect
+                  x="5"
+                  y="10"
+                  width="14"
+                  height="10"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M8 10V7a4 4 0 0 1 8 0v3"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </span>
+          </div>
+          <div class="relay-panel__body">
+            <form
+              [formGroup]="passwordForm"
+              (ngSubmit)="changePassword()"
+              class="form-stack"
+              novalidate
+            >
+              <div class="field">
+                <label for="profile-current-password">Current password</label>
+                <input
+                  id="profile-current-password"
+                  type="password"
+                  formControlName="currentPassword"
+                  autocomplete="current-password"
+                />
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="profile-new-password">New password</label>
+                  <input
+                    id="profile-new-password"
+                    type="password"
+                    formControlName="newPassword"
+                    autocomplete="new-password"
+                    aria-describedby="profile-password-requirements"
+                  />
+                </div>
+                <div class="field">
+                  <label for="profile-confirm-password">Confirm password</label>
+                  <input
+                    id="profile-confirm-password"
+                    type="password"
+                    formControlName="confirmPassword"
+                    autocomplete="new-password"
+                    aria-describedby="profile-password-requirements"
+                  />
+                </div>
+              </div>
+              <p id="profile-password-requirements" class="field__hint">
+                {{ passwordRequirements }}
+              </p>
+
+              @if (passwordForm.touched && passwordForm.invalid) {
+                <div class="alert alert--error">
+                  Enter the current password and a new password that satisfies every requirement.
+                </div>
+              }
+              @if (passwordMessage()) {
+                <div class="alert">{{ passwordMessage() }}</div>
+              }
+
+              <div class="form-actions">
+                <button type="submit" class="action action--dark" [disabled]="passwordSaving()">
+                  {{ passwordSaving() ? 'Updating…' : 'Update password' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </article>
+      </div>
+    </section>
+  }
+</div>

@@ -1,0 +1,6 @@
+# Optional local-only override for direct SQL Server access from the host.
+# Copy to docker-compose.override.yml only when a host SQL client needs port 1433.
+services:
+  sqlserver:
+    ports:
+      - "1433:1433"
